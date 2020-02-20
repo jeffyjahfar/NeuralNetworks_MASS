@@ -1,0 +1,106 @@
+The process for setting it up to run the first time for each user is
+cumbersome.  After the initial user set-up it works well without much
+fuss.
+
+# login as self
+# make file .mpd.conf  vi/emacs/pico .mpd.conf    
+# in it write one line:
+secretword=<secretword>
+
+where <secretword> is a secure key you create but not your normal password
+save the file. You may write:
+secretword=css534
+
+# set the correct permissions on this file (other permissions won't work)
+chmod 600 .mpd.conf
+
+# create the mpd.hosts file in your "home" directory. The file should
+include a list of cssmpi machines as seen in /home/mfukuda/css534/mpiJava/mpd.hosts:
+cssmpi2.uwb.edu
+cssmpi3.uwb.edu
+cssmpi4.uwb.edu
+
+Note that you should not include cssmpi1 where you are logging in.
+
+# edit .bash_profile file as follows:
+
+export PATH=/usr/apps/mpich121-`uname -p`/bin:$PATH
+export JAVAPATH=/usr/java/latest
+export CLASSPATH=$CLASSPATH:/usr/apps/mpiJava-`uname -p`/lib/classes:.
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/apps/mpiJava-`uname -p`/lib
+export PATH=/usr/apps/mpiJava-`uname -p`/src/scripts:$JAVAPATH/bin:$PATH
+
+# either relogin or type at the command line:
+# source .bash_profile
+
+# test that your set-up works on the current host
+mpd &
+mpiexec -n 1 /bin/hostname
+mpdallexit
+
+# if you get an error or warning this is a problem.  
+# You should get the hostname of your current host
+
+**  Need to be able to ssh without a password to other machines in order to
+use MPICH.  If this is not already set up:
+**************************************************************************
+**  ssh-keygen -t rsa                                                   **
+**  #  at "Enter file in which to save key", <enter> to accept default  **
+**  #  at "Enter passphrase" <enter> to keep the passphrase empty.      **
+**  #  do the same thing again                                          **
+**  #  then go to the .ssh directory                                    **
+**  # and change the name of id_rsa.pub to authorized_keys              **
+**  cd .ssh                                                             **
+**  mv id_rsa.pub authorized_keys                                       **
+**  # ssh to all lab machines to set up                                 **
+**  # first ssh need to respond "yes" to "continue connecting"          **
+**************************************************************************
+
+The first time a new host is added to the first "ring"; it needs to be
+established by a "yes" response to "continue connecting".  Every time the
+output hangs, type "yes".
+
+Once you have added all the hosts in this way, you never have to type
+"yes" again, they were all established for mpich.
+
+Thereafter, you can launch mpd at all nodes. Type the following
+commands from your home directory: 
+mfukuda@cssmpi1 ~]$ CSSmpdboot -n 4 -v
+
+Preparing...
+Starting Master's mpd Process...
+Starting node: cssmpi2
+Starting node: cssmpi3
+Starting node: cssmpi4
+Cluster built:
+cssmpi1_46768 (172.28.203.196)
+CSSmpdboot finished!
+[mfukuda@cssmpi1 ~]$
+
+To make sure if all mpds are running, type:
+[mfukuda@cssmpi1 ~]$ mpiexec -n 4 /bin/hostname
+cssmpi4
+cssmpi1
+cssmpi2
+cssmpi3
+[mfukuda@cssmpi1 ~]$
+
+Now, you are ready to run a mpiJava program.
+To compile:
+javac *.java
+
+To run 
+CSSmpdboot -n #cpus -v
+./java_mpirun.sh #cpus Hello
+./java_mpirun.sh #cpus MatrixMult size
+./java_mpirun.sh #cpus MyProgram
+
+To stop
+mpdallexit
+
+Whenever you log off, don't forget to type mpdallexit.
+
+For your quick reference to MPI Java, check MPI.ppt in the same directory.
+For detilas of MPI Java, refer to the following tutorial and specificatioin.
+http://www.hpjava.org/reports/mpiJava-spec/mpiJava-spec.pdf
+
